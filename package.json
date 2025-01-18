@@ -1,7 +1,7 @@
 {
-  "name": "@boardmeister/module-skeleton",
+  "name": "@boardmeister/antetype-memento",
   "version": "0.0.1",
-  "description": "Example module, to be reused when creating new common modules",
+  "description": "State care taker module for Antetype package",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,12 +10,12 @@
   ],
   "scripts": {
     "typescript": "./node_modules/.bin/dts-bundle-generator --no-check --export-referenced-types false --project tsconfig.json -o dist/index.d.ts src/index.tsx",
-    "link": "npm link @boardmeister/minstrel @boardmeister/herald @boardmeister/marshal",
-    "build": "node esbuild.config.mjs && npm run typescript"
+    "link": "npm link @boardmeister/antetype @boardmeister/antetype-core @boardmeister/minstrel @boardmeister/herald @boardmeister/marshal",
+    "build": "node .eslintrc.cjs && npm run typescript"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:Board-Meister/module-skeleton.git"
+    "url": "git@github.com:Board-Meister/antetype-memento.git"
   },
   "keywords": [
     "module",
@@ -25,11 +25,11 @@
   "author": "",
   "license": "GPL-2.0-only",
   "bugs": {
-    "url": "https://github.com/Board-Meister/module-skeleton/issues"
+    "url": "https://github.com/Board-Meister/antetype-memento/issues"
   },
   "dependencies": {
   },
-  "homepage": "https://github.com/Board-Meister/module-skeleton#readme",
+  "homepage": "https://github.com/Board-Meister/antetype-memento#readme",
   "devDependencies": {
     "glob": "^10.4.1",
     "@eslint/js": "^9.9.0",

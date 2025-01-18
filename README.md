@@ -1,2 +1,2 @@
-# module-skeleton
-Example module, to be reused when creating new common modules
+# antetype-memento
+State care taker module for Antetype package

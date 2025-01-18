@@ -135,6 +135,114 @@ declare class Minstrel {
 	component<T>(module: Module, suffix: string, scope?: Record<string, any>): React$1.FC<T>;
 	asset(module: Module, suffix: string): string;
 }
+interface ModulesEvent {
+	modules: Modules;
+	canvas: HTMLCanvasElement | null;
+}
+interface Module$1 {
+}
+interface Modules {
+	[key: string]: Module$1 | undefined;
+}
+declare type UnknownRecord = Record<symbol | string, unknown>;
+declare type XValue = number;
+declare type YValue = XValue;
+interface IStart {
+	x: XValue;
+	y: YValue;
+}
+interface ISize {
+	w: XValue;
+	h: YValue;
+}
+interface IArea {
+	size: ISize;
+	start: IStart;
+}
+interface IHierarchy {
+	parent: IParentDef | null;
+	position: number;
+}
+interface IBaseDef<T = never> {
+	[key: symbol | string]: unknown;
+	hierarchy?: IHierarchy;
+	start: IStart;
+	size: ISize;
+	type: string;
+	can?: {
+		move?: boolean;
+		scale?: boolean;
+		remove?: boolean;
+	};
+	area?: IArea;
+	data?: T;
+}
+interface IParentDef extends IBaseDef {
+	layout: Layout;
+}
+interface IDocumentDef extends IParentDef {
+	type: "document";
+	base: Layout;
+	start: {
+		x: 0;
+		y: 0;
+	};
+	size: {
+		w: 0;
+		h: 0;
+	};
+}
+interface IFont {
+	url: string;
+	name: string;
+}
+interface ICore {
+	meta: {
+		document: IDocumentDef;
+	};
+	clone: {
+		definitions: (data: IBaseDef) => Promise<IBaseDef>;
+		getOriginal: <T extends UnknownRecord = UnknownRecord>(object: T) => T;
+		getClone: <T extends UnknownRecord = UnknownRecord>(object: T) => T;
+	};
+	manage: {
+		markAsLayer: (layer: IBaseDef) => IBaseDef;
+		add: (def: IBaseDef, parent?: IParentDef | null, position?: number | null) => void;
+		addVolatile: (def: IBaseDef, parent?: IParentDef | null, position?: number | null) => void;
+		move: (original: IBaseDef, def: IBaseDef, newStart: IStart) => Promise<void>;
+		resize: (original: IBaseDef, def: IBaseDef, newSize: ISize) => Promise<void>;
+		remove: (def: IBaseDef) => void;
+		removeVolatile: (def: IBaseDef) => void;
+	};
+	view: {
+		calc: (element: IBaseDef, parent: IParentDef, position: number) => Promise<IBaseDef | null>;
+		draw: (element: IBaseDef) => void;
+		redraw: (layout?: Layout) => void;
+		recalculate: (parent?: IParentDef, layout?: Layout) => Promise<Layout>;
+		redrawDebounce: (layout: Layout) => void;
+	};
+	policies: {
+		isLayer: (layer: Record<symbol, unknown>) => boolean;
+		isClone: (layer: Record<symbol, unknown>) => boolean;
+	};
+	font: {
+		load: (font: IFont) => Promise<void>;
+	};
+	setting: {
+		set: (name: string, value: unknown) => void;
+		get: <T = unknown>(name: string) => T | null;
+		has: (name: string) => boolean;
+	};
+}
+type Layout = (IBaseDef | IParentDef)[];
+export interface IRequiredModules extends Modules {
+	core: ICore;
+}
+export interface IMementoParams {
+	canvas: HTMLCanvasElement | null;
+	modules: IRequiredModules;
+	injected: IInjected;
+}
 interface IInjected extends Record<string, object> {
 	minstrel: Minstrel;
 	herald: Herald;
@@ -143,12 +251,7 @@ export declare class Skeleton {
 	#private;
 	static inject: Record<string, string>;
 	inject(injections: IInjected): void;
-	/**
-	 * Example of lazy loading the module
-	 */
-	register(event: CustomEvent<{
-		modules: Record<string, unknown>;
-	}>): Promise<void>;
+	register(event: CustomEvent<ModulesEvent>): Promise<void>;
 	static subscriptions: Subscriptions;
 }
 declare const EnSkeleton: IInjectable & ISubscriber;

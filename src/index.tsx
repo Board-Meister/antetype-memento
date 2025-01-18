@@ -1,7 +1,21 @@
 import type { IInjectable, Module } from "@boardmeister/marshal"
 import type { Minstrel } from "@boardmeister/minstrel"
 import type { Herald, ISubscriber, Subscriptions } from "@boardmeister/herald"
-import MyModule, { IMyModule } from "@src/myModule";
+import type Memento from "@src/module";
+import type { IMemento } from "@src/module";
+import type { ModulesEvent, Modules } from "@boardmeister/antetype"
+import type { ICore } from "@boardmeister/antetype-core"
+import { Event as AntetypeEvent } from "@boardmeister/antetype"
+
+export interface IRequiredModules extends Modules {
+  core: ICore;
+}
+
+export interface IMementoParams {
+  canvas: HTMLCanvasElement|null,
+  modules: IRequiredModules,
+  injected: IInjected,
+}
 
 interface IInjected extends Record<string, object> {
   minstrel: Minstrel;
@@ -10,9 +24,9 @@ interface IInjected extends Record<string, object> {
 
 export class Skeleton {
   #injected?: IInjected;
-  #module: typeof MyModule|null = null;
+  #module: typeof Memento|null = null;
   // @ts-expect-error TS6133: '#instance' is declared but its value is never read.
-  #instance: IMyModule|null = null;
+  #instance: IMemento|null = null;
 
   static inject: Record<string, string> = {
     minstrel: 'boardmeister/minstrel',
@@ -22,19 +36,21 @@ export class Skeleton {
     this.#injected = injections;
   }
 
-  /**
-   * Example of lazy loading the module
-   */
-  async register(event: CustomEvent<{ modules: Record<string, unknown> }>): Promise<void> {
+  async register(event: CustomEvent<ModulesEvent>): Promise<void> {
+    const { modules, canvas } = event.detail;
     if (!this.#module) {
-      const module = this.#injected!.minstrel.getResourceUrl(this as Module, 'myModule.js');
-      this.#module = ((await import(module)) as { default: typeof MyModule }).default;
+      const module = this.#injected!.minstrel.getResourceUrl(this as Module, 'module.js');
+      this.#module = ((await import(module)) as { default: typeof Memento }).default;
     }
-    this.#instance = event.detail.modules.myModule = this.#module();
+    this.#instance = modules.transform = this.#module({
+      canvas,
+      modules: modules as IRequiredModules,
+      injected: this.#injected!
+    });
   }
 
   static subscriptions: Subscriptions = {
-    'example.module.register': 'register',
+    [AntetypeEvent.MODULES]: 'register',
   }
 }
 const EnSkeleton: IInjectable&ISubscriber = Skeleton

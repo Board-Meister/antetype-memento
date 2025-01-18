@@ -11,7 +11,7 @@ const __dirname = dirname(__filename);
 await esbuild.build({
   entryPoints: [
     ...globSync(resolve(__dirname, 'src/index.tsx')),
-    ...globSync(resolve(__dirname, 'src/myModule.tsx')),
+    ...globSync(resolve(__dirname, 'src/module.tsx')),
   ],
   bundle: true,
   minify: true,
