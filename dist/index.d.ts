@@ -235,8 +235,22 @@ interface ICore {
 	};
 }
 type Layout = (IBaseDef | IParentDef)[];
+export type SaveCommand<T = unknown> = (original: IBaseDef, data: T) => void | Promise<void>;
 export interface IRequiredModules extends Modules {
 	core: ICore;
+}
+declare enum Event$1 {
+	SAVE = "antetype.memento.save"
+}
+export interface IMementoState<T = unknown> {
+	origin?: string;
+	data?: T;
+	layer: IBaseDef;
+	undo: SaveCommand<T>;
+	redo: SaveCommand<T>;
+}
+export interface SaveEvent<T = unknown> {
+	state: IMementoState<T>[];
 }
 export interface IMementoParams {
 	canvas: HTMLCanvasElement | null;
@@ -252,12 +266,14 @@ export declare class Skeleton {
 	static inject: Record<string, string>;
 	inject(injections: IInjected): void;
 	register(event: CustomEvent<ModulesEvent>): Promise<void>;
+	save(event: CustomEvent<SaveEvent>): void;
 	static subscriptions: Subscriptions;
 }
 declare const EnSkeleton: IInjectable & ISubscriber;
 
 export {
 	EnSkeleton as default,
+	Event$1 as Event,
 };
 
 export {};
