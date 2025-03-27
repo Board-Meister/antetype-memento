@@ -24,21 +24,25 @@ interface RegisterConfig {
 		src: string;
 	};
 }
-type Module = Record<string, unknown>;
+declare class CModule<T = any> {
+	constructor(...args: unknown[]);
+	inject?: (injections: T) => void;
+}
+type Module<T = any> = CModule<T> | Record<string, unknown>;
 interface IModuleImportObject {
-	default?: Module | React$1.FC | ((...args: unknown[]) => void);
+	default?: Module | ((...args: unknown[]) => void);
 }
 interface IModuleImport {
 	config: RegisterConfig;
 	module: IModuleImportObject | (() => Promise<Module>);
 }
-declare class _IInjectable {
+declare class _IInjectable<T = object> {
 	constructor(...args: unknown[]);
-	inject(injections: Record<string, object>): void;
+	inject(injections: T): void;
 	scope?(): Record<string, unknown>;
 	static inject: Record<string, string>;
 }
-type IInjectable = typeof _IInjectable;
+type IInjectable<T> = typeof _IInjectable<T>;
 declare class Marshal {
 	static version: string;
 	renderCount: number;
@@ -46,7 +50,7 @@ declare class Marshal {
 	loaded: Record<string, object>;
 	tagMap: Record<string, IModuleImport[]>;
 	scope: Record<string, unknown>;
-	instanceMap: WeakMap<Module, RegisterConfig>;
+	instanceMap: WeakMap<Module<any>, RegisterConfig>;
 	constructor();
 	addScope(name: string, value: unknown): void;
 	render(): void;
@@ -135,16 +139,16 @@ declare class Minstrel {
 	component<T>(module: Module, suffix: string, scope?: Record<string, any>): React$1.FC<T>;
 	asset(module: Module, suffix: string): string;
 }
+declare type UnknownRecord = Record<symbol | string, unknown>;
 interface ModulesEvent {
-	modules: Modules;
+	modules: Record<string, Module$1>;
 	canvas: HTMLCanvasElement | null;
 }
-interface Module$1 {
-}
+declare type Module$1 = object;
 interface Modules {
 	[key: string]: Module$1 | undefined;
+	core: ICore;
 }
-declare type UnknownRecord = Record<symbol | string, unknown>;
 declare type XValue = number;
 declare type YValue = XValue;
 interface IStart {
@@ -165,6 +169,7 @@ interface IHierarchy {
 }
 interface IBaseDef<T = never> {
 	[key: symbol | string]: unknown;
+	id?: string;
 	hierarchy?: IHierarchy;
 	start: IStart;
 	size: ISize;
@@ -196,9 +201,10 @@ interface IFont {
 	url: string;
 	name: string;
 }
-interface ICore {
+interface ICore extends Module$1 {
 	meta: {
 		document: IDocumentDef;
+		generateId: () => string;
 	};
 	clone: {
 		definitions: (data: IBaseDef) => Promise<IBaseDef>;
@@ -209,17 +215,18 @@ interface ICore {
 		markAsLayer: (layer: IBaseDef) => IBaseDef;
 		add: (def: IBaseDef, parent?: IParentDef | null, position?: number | null) => void;
 		addVolatile: (def: IBaseDef, parent?: IParentDef | null, position?: number | null) => void;
-		move: (original: IBaseDef, def: IBaseDef, newStart: IStart) => Promise<void>;
-		resize: (original: IBaseDef, def: IBaseDef, newSize: ISize) => Promise<void>;
+		move: (original: IBaseDef, newStart: IStart) => Promise<void>;
+		resize: (original: IBaseDef, newSize: ISize) => Promise<void>;
 		remove: (def: IBaseDef) => void;
 		removeVolatile: (def: IBaseDef) => void;
+		calcAndUpdateLayer: (original: IBaseDef) => Promise<void>;
 	};
 	view: {
-		calc: (element: IBaseDef, parent: IParentDef, position: number) => Promise<IBaseDef | null>;
+		calc: (element: IBaseDef, parent?: IParentDef, position?: number, currentSession?: symbol | null) => Promise<IBaseDef | null>;
 		draw: (element: IBaseDef) => void;
 		redraw: (layout?: Layout) => void;
-		recalculate: (parent?: IParentDef, layout?: Layout) => Promise<Layout>;
-		redrawDebounce: (layout: Layout) => void;
+		recalculate: (parent?: IParentDef, layout?: Layout, currentSession?: symbol | null) => Promise<Layout>;
+		redrawDebounce: (layout?: Layout) => void;
 	};
 	policies: {
 		isLayer: (layer: Record<symbol, unknown>) => boolean;
@@ -235,7 +242,7 @@ interface ICore {
 	};
 }
 type Layout = (IBaseDef | IParentDef)[];
-export type SaveCommand<T = unknown> = (original: IBaseDef, data: T) => void | Promise<void>;
+export type SaveCommand<T = unknown> = (original: IBaseDef | IParentDef, data: T) => void | Promise<void>;
 export interface IRequiredModules extends Modules {
 	core: ICore;
 }
@@ -269,7 +276,7 @@ export declare class Skeleton {
 	save(event: CustomEvent<SaveEvent>): void;
 	static subscriptions: Subscriptions;
 }
-declare const EnSkeleton: IInjectable & ISubscriber;
+declare const EnSkeleton: IInjectable<IInjected> & ISubscriber;
 
 export {
 	EnSkeleton as default,

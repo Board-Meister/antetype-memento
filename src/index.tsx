@@ -3,11 +3,10 @@ import type { Minstrel } from "@boardmeister/minstrel"
 import type { Herald, ISubscriber, Subscriptions } from "@boardmeister/herald"
 import type Memento from "@src/module";
 import type { IMemento } from "@src/module";
-import type { ModulesEvent, Modules } from "@boardmeister/antetype"
-import type { ICore, IBaseDef } from "@boardmeister/antetype-core"
-import { Event as AntetypeEvent } from "@boardmeister/antetype"
+import type { ICore, IBaseDef, IParentDef, ModulesEvent, Modules } from "@boardmeister/antetype-core"
+import { Event as AntetypeEvent } from "@boardmeister/antetype-core"
 
-export type SaveCommand<T = unknown> = (original: IBaseDef, data: T) => void|Promise<void>;
+export type SaveCommand<T = unknown> = (original: IBaseDef|IParentDef, data: T) => void|Promise<void>;
 
 export interface IRequiredModules extends Modules {
   core: ICore;
@@ -59,7 +58,7 @@ export class Skeleton {
       const module = this.#injected!.minstrel.getResourceUrl(this as Module, 'module.js');
       this.#module = ((await import(module)) as { default: typeof Memento }).default;
     }
-    this.#instance = modules.transform = this.#module({
+    this.#instance = modules.memento = this.#module({
       canvas,
       modules: modules as IRequiredModules,
       injected: this.#injected!
@@ -78,5 +77,5 @@ export class Skeleton {
     [Event.SAVE]: 'save',
   }
 }
-const EnSkeleton: IInjectable&ISubscriber = Skeleton
+const EnSkeleton: IInjectable<IInjected>&ISubscriber = Skeleton
 export default EnSkeleton;
