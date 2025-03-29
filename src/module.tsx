@@ -13,6 +13,7 @@ export interface IStackItem {
 export default function Memento(
   {
     modules,
+    canvas,
   }: IMementoParams
 ): IMemento {
   const undoStack: IStackItem[][] = [];
@@ -20,7 +21,7 @@ export default function Memento(
   const maxItems = 100;
 
   const onKeyUp = (e: KeyboardEvent): void => {
-    if (!e.ctrlKey) {
+    if (e.target !== canvas || !e.ctrlKey) {
       return;
     }
 
