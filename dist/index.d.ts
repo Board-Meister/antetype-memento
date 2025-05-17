@@ -79,7 +79,7 @@ declare class _ISubscriber {
 }
 type ISubscriber = typeof _ISubscriber;
 type AmbiguousSubscription = string | Subscription | Subscription[] | EventHandler;
-type EventHandler = (event: CustomEvent) => Promise<void> | void;
+type EventHandler = (event: CustomEvent) => Promise<any> | any;
 type Subscriptions = Record<string, AmbiguousSubscription>;
 interface Subscription {
 	method: string | EventHandler;
@@ -98,9 +98,9 @@ interface IEventRegistration {
 	sort?: boolean;
 	symbol?: symbol | null;
 }
-interface IInjection extends Record<string, object> {
+interface IInjection extends Record<string, object | undefined> {
 	subscribers: ISubscriberObject[];
-	marshal: Marshal;
+	marshal?: Marshal;
 }
 declare class Herald {
 	#private;
@@ -142,13 +142,18 @@ declare class Minstrel {
 declare type UnknownRecord = Record<symbol | string, unknown>;
 interface ModulesEvent {
 	modules: Record<string, Module$1>;
-	canvas: HTMLCanvasElement | null;
+	canvas: HTMLCanvasElement;
 }
 declare type Module$1 = object;
 interface Modules {
-	[key: string]: Module$1 | undefined;
 	core: ICore;
+	[key: string]: Module$1 | undefined;
 }
+type ITypeDefinitionPrimitive = "boolean" | "string" | "number";
+type TypeDefinition = {
+	[key: string]: ITypeDefinitionPrimitive | TypeDefinition | TypeDefinition[];
+} | (ITypeDefinitionPrimitive)[] | TypeDefinition[];
+type ITypeDefinitionMap = Record<string, TypeDefinition>;
 interface ISettingFont {
 	name: string;
 	url: string;
@@ -169,7 +174,7 @@ interface ISettingsDefinitionFieldContainer extends ISettingsDefinitionFieldGene
 	fields: SettingsDefinitionField[][];
 	collapsable?: boolean;
 }
-type ISettingsInputValue = string | number | string[] | number[] | Record<string, any> | Record<string, any>[] | undefined;
+type ISettingsInputValue = string | number | (string | number | Record<string, any>)[] | Record<string, any> | undefined;
 interface ISettingsDefinitionFieldInput extends ISettingsDefinitionFieldGeneric {
 	name: string;
 	value: ISettingsInputValue;
@@ -187,11 +192,6 @@ interface ISettingsDefinition {
 	name: string;
 	tabs: ISettingsDefinitionTab[];
 }
-interface ISettingEvent {
-	settings: ISettingsDefinition[];
-	additional: Record<string, any>;
-}
-type SettingsEvent = CustomEvent<ISettingEvent>;
 declare type XValue = number;
 declare type YValue = XValue;
 interface IStart {
@@ -249,6 +249,7 @@ interface ICore extends Module$1 {
 	meta: {
 		document: IDocumentDef;
 		generateId: () => string;
+		layerDefinitions: () => ITypeDefinitionMap;
 	};
 	clone: {
 		definitions: (data: IBaseDef) => Promise<IBaseDef>;
@@ -259,8 +260,6 @@ interface ICore extends Module$1 {
 		markAsLayer: (layer: IBaseDef) => IBaseDef;
 		add: (def: IBaseDef, parent?: IParentDef | null, position?: number | null) => void;
 		addVolatile: (def: IBaseDef, parent?: IParentDef | null, position?: number | null) => void;
-		move: (original: IBaseDef, newStart: IStart) => Promise<void>;
-		resize: (original: IBaseDef, newSize: ISize) => Promise<void>;
 		remove: (def: IBaseDef) => void;
 		removeVolatile: (def: IBaseDef) => void;
 		calcAndUpdateLayer: (original: IBaseDef) => Promise<void>;
@@ -271,6 +270,8 @@ interface ICore extends Module$1 {
 		redraw: (layout?: Layout) => void;
 		recalculate: (parent?: IParentDef, layout?: Layout, currentSession?: symbol | null) => Promise<Layout>;
 		redrawDebounce: (layout?: Layout) => void;
+		move: (original: IBaseDef, newStart: IStart) => Promise<void>;
+		resize: (original: IBaseDef, newSize: ISize) => Promise<void>;
 	};
 	policies: {
 		isLayer: (layer: Record<symbol, unknown>) => boolean;
@@ -281,10 +282,11 @@ interface ICore extends Module$1 {
 	};
 	setting: {
 		set: (name: string, value: unknown) => void;
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
 		get: <T = unknown>(name: string) => T | null;
 		has: (name: string) => boolean;
-		retrieveSettingsDefinition: (additional?: Record<string, any>) => Promise<ISettingsDefinition[]>;
-		setSettingsDefinition: (e: SettingsEvent) => void;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		retrieve: (additional?: Record<string, any>) => Promise<ISettingsDefinition[]>;
 	};
 }
 type Layout = (IBaseDef | IParentDef)[];
@@ -308,7 +310,7 @@ export interface SaveEvent<T = unknown> {
 export interface IMementoParams {
 	canvas: HTMLCanvasElement | null;
 	modules: IRequiredModules;
-	injected: IInjected;
+	herald: Herald;
 }
 interface IInjected extends Record<string, object> {
 	minstrel: Minstrel;
@@ -319,7 +321,6 @@ export declare class Skeleton {
 	static inject: Record<string, string>;
 	inject(injections: IInjected): void;
 	register(event: CustomEvent<ModulesEvent>): Promise<void>;
-	save(event: CustomEvent<SaveEvent>): void;
 	static subscriptions: Subscriptions;
 }
 declare const EnSkeleton: IInjectable<IInjected> & ISubscriber;

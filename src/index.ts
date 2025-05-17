@@ -2,7 +2,6 @@ import type { IInjectable, Module } from "@boardmeister/marshal"
 import type { Minstrel } from "@boardmeister/minstrel"
 import type { Herald, ISubscriber, Subscriptions } from "@boardmeister/herald"
 import type Memento from "@src/module";
-import type { IMemento } from "@src/module";
 import type { ICore, IBaseDef, IParentDef, ModulesEvent, Modules } from "@boardmeister/antetype-core"
 import { Event as AntetypeEvent } from "@boardmeister/antetype-core"
 
@@ -31,7 +30,7 @@ export interface SaveEvent<T = unknown> {
 export interface IMementoParams {
   canvas: HTMLCanvasElement|null,
   modules: IRequiredModules,
-  injected: IInjected,
+  herald: Herald,
 }
 
 interface IInjected extends Record<string, object> {
@@ -42,7 +41,6 @@ interface IInjected extends Record<string, object> {
 export class Skeleton {
   #injected?: IInjected;
   #module: typeof Memento|null = null;
-  #instance: IMemento|null = null;
 
   static inject: Record<string, string> = {
     minstrel: 'boardmeister/minstrel',
@@ -58,23 +56,15 @@ export class Skeleton {
       const module = this.#injected!.minstrel.getResourceUrl(this as Module, 'module.js');
       this.#module = ((await import(module)) as { default: typeof Memento }).default;
     }
-    this.#instance = modules.memento = this.#module({
+    modules.memento = this.#module({
       canvas,
       modules: modules as IRequiredModules,
-      injected: this.#injected!
+      herald: this.#injected!.herald,
     });
-  }
-
-  save(event: CustomEvent<SaveEvent>): void {
-    if (!this.#instance) {
-      return;
-    }
-    this.#instance.addToStack(event.detail.state);
   }
 
   static subscriptions: Subscriptions = {
     [AntetypeEvent.MODULES]: 'register',
-    [Event.SAVE]: 'save',
   }
 }
 const EnSkeleton: IInjectable<IInjected>&ISubscriber = Skeleton

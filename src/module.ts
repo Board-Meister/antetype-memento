@@ -1,8 +1,10 @@
-import type { IBaseDef, IParentDef } from "@boardmeister/antetype-core"
-import { IMementoParams, IMementoState } from "@src/index";
+import { type IBaseDef, type IParentDef, Event as CoreEvent } from "@boardmeister/antetype-core"
+import { Event, IMementoParams, IMementoState, type SaveEvent } from "@src/index";
 
 export interface IMemento {
   addToStack: (state: IMementoState[]) => void;
+  undo: () => Promise<void>;
+  redo: () => Promise<void>;
 }
 
 export interface IStackItem {
@@ -12,6 +14,7 @@ export interface IStackItem {
 
 export default function Memento(
   {
+    herald,
     modules,
     canvas,
   }: IMementoParams
@@ -21,7 +24,7 @@ export default function Memento(
   const maxItems = 100;
 
   const onKeyUp = (e: KeyboardEvent): void => {
-    if (e.target !== canvas || !e.ctrlKey) {
+    if (!e.ctrlKey) {
       return;
     }
 
@@ -86,9 +89,26 @@ export default function Memento(
     modules.core.view.redraw();
   }
 
-  document.addEventListener('keyup', onKeyUp, false);
+  canvas?.addEventListener('keyup', onKeyUp, false);
+  const unregister = herald.batch([
+    {
+      event: Event.SAVE,
+      subscription: (event: CustomEvent<SaveEvent>): void => {
+        addToStack(event.detail.state);
+      },
+    },
+    {
+      event: CoreEvent.CLOSE,
+      subscription: () => {
+        canvas?.removeEventListener('keyup', onKeyUp, false);
+        unregister();
+      },
+    },
+  ]);
 
   return {
-    addToStack
+    addToStack,
+    undo,
+    redo,
   };
 }
