@@ -2,9 +2,12 @@ import type { IInjectable, Module } from "@boardmeister/marshal"
 import type { Herald, ISubscriber, Subscriptions } from "@boardmeister/herald"
 import type Memento from "@src/module";
 import type { ModulesEvent } from "@boardmeister/antetype-core"
-import { Event as AntetypeEvent } from "@boardmeister/antetype-core"
 import type { IRequiredModules } from "@src/type.d";
 import type Marshal from "@boardmeister/marshal";
+import { Event as AntetypeEvent } from "@boardmeister/antetype-core"
+
+export const ID = 'memento';
+export const VERSION = '0.0.4';
 
 interface IInjected extends Record<string, object> {
   marshal: Marshal;
@@ -23,17 +26,24 @@ export class MementoConf {
     this.#injected = injections;
   }
 
-  async register(event: CustomEvent<ModulesEvent>): Promise<void> {
-    const { modules, canvas } = event.detail;
-    if (!this.#module) {
-      const module = this.#injected!.marshal.getResourceUrl(this as Module, 'module.js');
-      this.#module = ((await import(module)) as { default: typeof Memento }).default;
-    }
-    modules.memento = this.#module({
-      canvas,
-      modules: modules as IRequiredModules,
-      herald: this.#injected!.herald,
-    });
+  register(event: ModulesEvent): void {
+    const { registration } = event.detail;
+
+    registration[ID] = {
+      load: async () => {
+        if (!this.#module) {
+          const module = this.#injected!.marshal.getResourceUrl(this as Module, 'module.js');
+          this.#module = ((await import(module)) as { default: typeof Memento }).default;
+        }
+
+        return (modules, canvas) => this.#module!({
+          canvas,
+          modules: modules as IRequiredModules,
+          herald: this.#injected!.herald,
+        });
+      },
+      version: VERSION,
+    };
   }
 
   static subscriptions: Subscriptions = {

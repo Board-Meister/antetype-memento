@@ -30,6 +30,8 @@ interface IMemento {
 	redo: () => Promise<void>;
 }
 export function Memento({ herald, modules, canvas, }: IMementoParams): IMemento;
+export declare const ID = "memento";
+export declare const VERSION = "0.0.4";
 
 export {
 	Event$1 as Event,

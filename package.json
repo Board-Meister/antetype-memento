@@ -1,6 +1,6 @@
 {
   "name": "@boardmeister/antetype-memento",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "State care taker module for Antetype package",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -52,7 +52,7 @@
     "typescript-eslint": "^8.0.1"
   },
   "dependencies": {
-    "@boardmeister/antetype-core": "^0.0.3",
+    "@boardmeister/antetype-core": "^0.0.5",
     "@boardmeister/herald": "^0.0.1",
     "@boardmeister/marshal": "^0.0.2"
   }
