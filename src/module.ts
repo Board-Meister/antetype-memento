@@ -1,4 +1,4 @@
-import { type IBaseDef, type IParentDef, Event as CoreEvent } from "@boardmeister/antetype-core"
+import { type Canvas, type CanvasChangeEvent, type IBaseDef, type IParentDef, Event as CoreEvent } from "@boardmeister/antetype-core"
 import { Event, IMementoParams, IMementoState, type SaveEvent } from "@src/index";
 
 export interface IMemento {
@@ -16,7 +16,6 @@ export default function Memento(
   {
     herald,
     modules,
-    canvas,
   }: IMementoParams
 ): IMemento {
   const undoStack: IStackItem[][] = [];
@@ -89,22 +88,45 @@ export default function Memento(
     modules.core.view.redraw();
   }
 
-  canvas?.addEventListener('keyup', onKeyUp, false);
-  const unregister = herald.batch([
-    {
-      event: Event.SAVE,
-      subscription: (event: CustomEvent<SaveEvent>): void => {
-        addToStack(event.detail.state);
+  const register = (anchor: Canvas|null = null): void => {
+    anchor ??= modules.core.meta.getCanvas();
+    const unregister = herald.batch([
+      {
+        event: Event.SAVE,
+        subscription: (event: CustomEvent<SaveEvent>): void => {
+          addToStack(event.detail.state);
+        },
+        anchor,
       },
-    },
-    {
-      event: CoreEvent.CLOSE,
-      subscription: () => {
-        canvas?.removeEventListener('keyup', onKeyUp, false);
-        unregister();
+      {
+        event: CoreEvent.CLOSE,
+        subscription: () => {
+          const canvas = modules.core.meta.getCanvas();
+          if (canvas instanceof HTMLCanvasElement) {
+            canvas.removeEventListener('keyup', onKeyUp, false);
+          }
+          unregister();
+        },
+        anchor,
       },
-    },
-  ]);
+      {
+        event: CoreEvent.CANVAS_CHANGE,
+        subscription: ({ detail: { current, previous } }: CanvasChangeEvent) => {
+          unregister();
+          if (previous instanceof HTMLCanvasElement) {
+            previous.removeEventListener('keyup', onKeyUp, false);
+          }
+          if (current instanceof HTMLCanvasElement) {
+            current.addEventListener('keyup', onKeyUp, false);
+            register(current);
+          }
+        },
+        anchor,
+      },
+    ]);
+  }
+
+  register();
 
   return {
     addToStack,

@@ -36,8 +36,7 @@ export class MementoConf {
           this.#module = ((await import(module)) as { default: typeof Memento }).default;
         }
 
-        return (modules, canvas) => this.#module!({
-          canvas,
+        return modules => this.#module!({
           modules: modules as IRequiredModules,
           herald: this.#injected!.herald,
         });
