@@ -24,7 +24,6 @@ export interface SaveEvent<T = unknown> {
 }
 
 export interface IMementoParams {
-  canvas: HTMLCanvasElement|null,
   modules: IRequiredModules,
   herald: Herald,
 }
