@@ -75,6 +75,11 @@ interface ISettingsDefinition {
 	name: string;
 	tabs: ISettingsDefinitionTab[];
 }
+interface ISaveEvent {
+	document: IExportDef;
+	canSave: boolean;
+	additions: Record<string, any>;
+}
 declare type XValue = number;
 declare type YValue = XValue;
 interface IStart {
@@ -124,6 +129,17 @@ interface IDocumentDef extends IParentDef {
 	};
 	settings: ISettings;
 }
+type ExportLayout = (IExportBaseDef | IExportParentDef)[];
+interface IExportBaseDef<T = never> extends IBaseDef<T> {
+	hierarchy: undefined;
+}
+interface IExportParentDef<T = never> extends IParentDef<T> {
+	hierarchy: undefined;
+	layout: ExportLayout;
+}
+interface IExportDef extends IDocumentDef {
+	base: ExportLayout;
+}
 interface IFont {
 	url: string;
 	name: string;
@@ -138,7 +154,20 @@ interface IBox {
 	x: number;
 	y: number;
 }
+interface IInit extends Record<string, any> {
+	base: Layout;
+	settings: ISettings;
+}
+interface ISave extends Record<string, any> {
+	document?: IExportDef;
+	canSave?: boolean;
+}
 interface ICore extends Module$1 {
+	flow: {
+		save: (save?: ISave) => Promise<ISaveEvent>;
+		init: (init: IInit) => Promise<void>;
+		close: () => Promise<void>;
+	};
 	event: {
 		batch: (events: IEventRegistration[], anchor?: Canvas | null) => VoidFunction;
 		dispatch(event: CustomEvent, settings?: IEventSettings): Promise<void>;
@@ -150,6 +179,8 @@ interface ICore extends Module$1 {
 		layerDefinitions: () => ITypeDefinitionMap;
 		getCanvas: () => Canvas | null;
 		setCanvas: (newCanvas: null | Canvas) => Promise<void>;
+		export: () => IExportDef;
+		serialize: (definition: Layout | IBaseDef) => string;
 	};
 	clone: {
 		definitions: (data: IBaseDef) => Promise<IBaseDef>;
@@ -275,8 +306,8 @@ interface IMemento {
 	redo: () => Promise<void>;
 }
 export function Memento({ herald, modules, }: IMementoParams): IMemento;
-export declare const ID = "memento";
-export declare const VERSION = "0.0.4";
+export const ID = "memento";
+export const VERSION = "0.0.4";
 
 export {
 	Event$1 as Event,

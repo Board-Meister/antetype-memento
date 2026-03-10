@@ -5,9 +5,7 @@ import type { ModulesEvent } from "@boardmeister/antetype-core"
 import type { IRequiredModules } from "@src/type.d";
 import type Marshal from "@boardmeister/marshal";
 import { Event as AntetypeEvent } from "@boardmeister/antetype-core"
-
-export const ID = 'memento';
-export const VERSION = '0.0.4';
+import { ID, VERSION } from "@src/values.d";
 
 interface IInjected extends Record<string, object> {
   marshal: Marshal;
