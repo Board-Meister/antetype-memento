@@ -1,5 +1,4 @@
 import type { ICore, IBaseDef, IParentDef, Modules } from "@boardmeister/antetype-core"
-import type { Herald } from "@boardmeister/herald";
 
 export type SaveCommand<T = unknown> = (original: IBaseDef|IParentDef, data: T) => void|Promise<void>;
 
@@ -25,5 +24,4 @@ export interface SaveEvent<T = unknown> {
 
 export interface IMementoParams {
   modules: IRequiredModules,
-  herald: Herald,
 }

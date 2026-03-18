@@ -36,7 +36,6 @@ export class MementoConf {
 
         return modules => this.#module!({
           modules: modules as IRequiredModules,
-          herald: this.#injected!.herald,
         });
       },
       version: VERSION,
